@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/7.5.2/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/7.5.2/firebase-auth.js"></script>
+    <script defer src="/__/firebase/7.5.2/firebase-database.js"></script>
+    <script defer src="/__/firebase/7.5.2/firebase-messaging.js"></script>
+    <script defer src="/__/firebase/7.5.2/firebase-storage.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+  </head>
+  <body>
+    <div class="container">
+        <div class="row">
+          <div class="col">
+            <h1>Dafiti</h1>
+          </div>
+        </div>
+        <div class="row pb-md-3">
+          <div class="col">
+            Cadastro do banner para os apps Dafiti
+          </div>
+        </div>
+        <div class="row border rounded shadow-sm">
+          <div class="col pt-md-3 pb-md-3">
+            <form>
+              <div class="form-group">
+                <label for="bannerText">Texto</label>
+                <input type="text" class="form-control" id="bannerText" aria-describedby="textHelp">
+                <small id="textHelp" class="form-text text-muted">Texto que será exibido no box</small>
+              </div>
+              <div class="form-group">
+                  <label for="bannerImage">Link da imagem</label>
+                  <input type="url" class="form-control" id="bannerImage" aria-describedby="imageHelp">
+                  <small id="imageHelp" class="form-text text-muted">Url da imagem que será exibida no banner</small>
+              </div>
+              <div class="form-group">
+                  <label for="bannerAction">Url para ser acionada</label>
+                  <input type="url" class="form-control" id="bannerAction" aria-describedby="imageHelp">
+                  <small id="imageHelp" class="form-text text-muted">Url do site que será aberto. Deixe vazio para não ter ação ao tocar no banner.</small>
+              </div>
+              <button type="submit" class="btn btn-primary">Gravar</button>
+            </form>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col" id="load"></div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+          // // The Firebase SDK is initialized and available here!
+          //
+          // firebase.auth().onAuthStateChanged(user => { });
+          // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+          // firebase.messaging().requestPermission().then(() => { });
+          // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+          //
+          // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+  
+          try {
+            let app = firebase.app();
+            let features = ['auth', 'database', 'messaging', 'storage'].filter(feature => typeof app[feature] === 'function');
+            // document.getElementById('load').innerHTML = `Firebase SDK loaded with ${features.join(', ')}`;
+            prepare();
+          } catch (e) {
+            console.error(e);
+            document.getElementById('load').innerHTML = 'Error loading the Firebase SDK, check the console.';
+          }
+        });
+
+        var firstCall = singIn;
+        
+        function prepare() {
+          let currentUser = firebase.auth().currentUser;
+          if (currentUser == null) {
+            singIn();
+            return;
+          }
+          sendToken(currentUser);
+        }
+
+        function sendToken(userToken) {
+          var r = new XMLHttpRequest();
+          console.log("user", userToken);
+          r.open("POST", "users/token", true);
+          r.onreadystatechange = function () {
+            // if (r.readyState != 4 || r.status != 200) return;
+            console.log("response", r.responseText);
+          };
+          r.send(JSON.stringify(userToken.toJSON()));
+        }
+
+        function singIn() {
+          var provider = new firebase.auth.GoogleAuthProvider();
+          provider.addScope('email');
+          firebase.auth().languageCode = 'pt';
+          provider.setCustomParameters({
+            'login_hint': 'user@dafiti.com.br',
+          });
+          firebase.auth().signInWithPopup(provider).then(function(result) {
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            var token = result.credential.accessToken;
+            
+            // The signed-in user info.
+            var user = result.user;
+
+            sendToken(user);
+
+          }).catch(function(error) {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+
+            // The email of the user's account used.
+            var email = error.email;
+
+            // The firebase.auth.AuthCredential type that was used.
+            var credential = error.credential;
+            // ...
+          });
+        }
+      </script>
+  </body>
+</html>
